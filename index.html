@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rodrigo | Embedded Systems and Control</title>
+<meta name="description" content="Student in embedded systems, control engineering and project management. Firmware in C, FreeRTOS, PID control and financial modelling.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: one column "player profile". A scoreboard header, then four blocks (About, Skills, Roles, Interests),
+   each headed like a tournament tier. Same pixel look as the game roadmap: stepped borders, hard shadows, tennis-ball accent. */
+:root {
+  color-scheme: light;
+  --bg: #dbe7ee;
+  --surface: #f2f7f9;
+  --ink: #12243a;
+  --muted: #4b6177;
+  --line: #12243a;
+  --ball: #c9e83c;
+  --ball-ink: #12243a;
+  --clay: #c8582a;
+  --grass: #2f8f4e;
+  --court: #2a6fa8;
+  --court-ink: #ffffff;
+  --shadow: #9db4c4;
+  --font-display: "Press Start 2P", "Courier New", monospace;
+  --font-body: "Pixelify Sans", "Trebuchet MS", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0e1a2b; --surface: #16273d; --ink: #e8f0f6; --muted: #98aec2; --line: #e8f0f6;
+    --ball: #d3f04a; --ball-ink: #0e1a2b; --clay: #e8805a; --grass: #55c277; --court: #5aa2d8; --court-ink: #0e1a2b; --shadow: #070f1a;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1a2b; --surface: #16273d; --ink: #e8f0f6; --muted: #98aec2; --line: #e8f0f6;
+  --ball: #d3f04a; --ball-ink: #0e1a2b; --clay: #e8805a; --grass: #55c277; --court: #5aa2d8; --court-ink: #0e1a2b; --shadow: #070f1a;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 56px;
+}
+a { color: inherit; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--clay); outline-offset: 2px; }
+.wrap { max-width: 980px; margin: 0 auto; }
+.skip { position: absolute; left: -999px; top: 8px; background: var(--ball); color: var(--ball-ink); padding: 8px 12px; border: 3px solid var(--line); z-index: 10; }
+.skip:focus { left: 8px; }
+
+/* nav */
+.nav {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); border-bottom: 3px solid var(--line);
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+}
+.nav-in { max-width: 980px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.brand { font-family: var(--font-display); font-size: 11px; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.chip {
+  border: 3px solid var(--line); background: var(--surface); padding: 4px 12px; min-height: 36px;
+  box-shadow: 3px 3px 0 var(--shadow); text-decoration: none; display: inline-flex; align-items: center;
+}
+.chip:hover { background: var(--ball); color: var(--ball-ink); }
+.chip:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--shadow); }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* hero */
+.hero { display: grid; grid-template-columns: auto 1fr; gap: 20px 24px; align-items: center; padding-block: 36px 24px; }
+#ball { width: 96px; height: 96px; image-rendering: pixelated; max-width: 100%; }
+.eyebrow { font-family: var(--font-display); font-size: 10px; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(20px, 5.4vw, 36px); line-height: 1.3; margin: 10px 0 12px; text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); max-width: 58ch; font-size: 19px; }
+
+.board {
+  border: 3px solid var(--line); background: var(--surface); box-shadow: 5px 5px 0 var(--shadow);
+  display: grid; margin-bottom: 40px;
+}
+.board div { display: grid; grid-template-columns: 130px 1fr; gap: 12px; padding: 12px 16px; align-items: baseline; }
+.board div + div { border-top: 3px solid var(--line); }
+.board dt { font-family: var(--font-display); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.board dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.board { margin-top: 0; }
+dl.board { margin-block: 0 40px; }
+
+/* sections */
+section { display: grid; gap: 18px; margin-bottom: 44px; }
+.sec-head { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; align-items: center; border-bottom: 3px solid var(--line); padding-bottom: 12px; }
+.tier {
+  font-family: var(--font-display); font-size: 9px; line-height: 1.5; text-transform: uppercase;
+  background: var(--court); color: var(--court-ink); padding: 8px 10px; letter-spacing: .04em; text-align: center; min-width: 92px;
+}
+h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(12px, 2.8vw, 16px); line-height: 1.5; text-wrap: balance; }
+p { margin: 0; }
+.prose { display: grid; gap: 14px; max-width: 66ch; font-size: 18px; }
+.prose p + p { margin: 0; }
+
+.card {
+  border: 3px solid var(--line); background: var(--surface); box-shadow: 4px 4px 0 var(--shadow); min-width: 0;
+}
+.card-h { font-family: var(--font-display); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 10px 12px; border-bottom: 3px solid var(--line); }
+.card-b { padding: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.tag { border: 2px solid var(--line); background: var(--bg); padding: 2px 10px; font-size: 16px; line-height: 1.5; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 16px; }
+
+/* roles: native details */
+.role { border: 3px solid var(--line); background: var(--surface); box-shadow: 4px 4px 0 var(--shadow); min-width: 0; }
+.role summary {
+  list-style: none; cursor: pointer; padding: 12px; display: grid; gap: 6px; min-height: 44px;
+}
+.role summary::-webkit-details-marker { display: none; }
+.role-kind { font-family: var(--font-display); font-size: 8px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.role-title { font-weight: 600; font-size: 19px; line-height: 1.3; overflow-wrap: anywhere; }
+.role-sub { color: var(--muted); }
+.role-more { font-family: var(--font-display); font-size: 8px; text-transform: uppercase; letter-spacing: .06em; color: var(--clay); }
+.role[open] { border-color: var(--clay); box-shadow: 4px 4px 0 var(--clay); }
+.role[open] .role-more::before { content: "Hide detail"; }
+.role:not([open]) .role-more::before { content: "Show detail"; }
+.role-body { padding: 0 12px 14px; display: grid; gap: 10px; border-top: 3px solid var(--line); padding-top: 12px; }
+.role[open] .role-body { border-top-color: var(--clay); }
+.role-body ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.role-body .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.interest { padding: 14px; display: grid; gap: 8px; align-content: start; }
+.interest h3 { margin: 0; font-size: 19px; line-height: 1.3; }
+.interest p { color: var(--muted); }
+
+.foot { color: var(--muted); font-size: 15px; display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; border-top: 3px solid var(--line); padding-top: 16px; }
+
+@media (max-width: 560px) {
+  .hero { grid-template-columns: 1fr; }
+  .board div { grid-template-columns: 1fr; gap: 4px; }
+  .sec-head { grid-template-columns: 1fr; }
+  .tier { justify-self: start; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#about">Skip to content</a>
+
+<nav class="nav" aria-label="Sections">
+  <div class="nav-in">
+    <a class="brand" href="#top">RODRIGO</a>
+    <a class="chip" href="#about">About</a>
+    <a class="chip" href="#skills">Skills</a>
+    <a class="chip" href="#roles">Roles</a>
+    <a class="chip" href="#interests">Interests</a>
+    <button class="chip" type="button" id="theme" aria-label="Switch colour theme">Theme</button>
+  </div>
+</nav>
+
+<div class="wrap" id="top">
+  <header class="hero">
+    <canvas id="ball" width="24" height="24" aria-hidden="true"></canvas>
+    <div>
+      <div class="eyebrow">Player profile</div>
+      <h1>Hi, I'm Rodrigo</h1>
+      <p class="lead">I write firmware in C, tune control loops on real hardware, and plan projects with numbers that hold up.</p>
+    </div>
+  </header>
+
+  <dl class="board" aria-label="At a glance">
+    <div><dt>Studying</dt><dd>Embedded systems, control engineering, project and financial management</dd></div>
+    <div><dt>Works in</dt><dd>C, FreeRTOS, Python</dd></div>
+    <div><dt>Languages</dt><dd>Portuguese, English</dd></div>
+  </dl>
+
+  <main id="main">
+    <!-- ABOUT -->
+    <section id="about" aria-labelledby="about-h">
+      <div class="sec-head"><div class="tier">Court 1</div><h2 id="about-h">About me</h2></div>
+      <div class="prose">
+        <p>I'm a student in a Portuguese higher-education program that combines embedded systems, control engineering and project and financial management. I like the places where those meet: a sensor reading that has to become a stable motor output, or a bootloader that has to survive a firmware update.</p>
+        <p>I learn by building and debugging on real boards. I work in small, testable steps, read the driver source when a call blocks, and prefer a minimal fix over a rewrite. Alongside the hardware work I write technical reports and financial analyses, so I'm comfortable explaining a result as well as producing it.</p>
+        <p>I work in both Portuguese and English.</p>
+      </div>
+    </section>
+
+    <!-- SKILLS -->
+    <section id="skills" aria-labelledby="skills-h">
+      <div class="sec-head"><div class="tier">Court 2</div><h2 id="skills-h">Skills</h2></div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-h">Embedded and firmware</div>
+          <div class="card-b">
+            <span class="tag">Embedded C</span><span class="tag">FreeRTOS</span><span class="tag">Bare-metal</span>
+            <span class="tag">Bootloaders</span><span class="tag">State machines</span><span class="tag">UART</span>
+            <span class="tag">PWM</span><span class="tag">I2C</span><span class="tag">OSPI flash</span>
+            <span class="tag">Modbus TCP</span><span class="tag">MQTT</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h">Control and hardware</div>
+          <div class="card-b">
+            <span class="tag">PID tuning</span><span class="tag">Open and closed loop</span><span class="tag">LiDAR sensing</span>
+            <span class="tag">Analog Discovery 2</span><span class="tag">ADI SC59x</span><span class="tag">LPC1769</span>
+            <span class="tag">ESP32-S3</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h">Software and tooling</div>
+          <div class="card-b">
+            <span class="tag">Python</span><span class="tag">pymodbus</span><span class="tag">Matplotlib</span>
+            <span class="tag">Tkinter</span><span class="tag">CCES</span><span class="tag">Debugging on target</span>
+            <span class="tag">Data visualisation</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h">Management and finance</div>
+          <div class="card-b">
+            <span class="tag">DCF, NPV, IRR</span><span class="tag">Payback</span><span class="tag">Scenario analysis</span>
+            <span class="tag">PERT and CPM</span><span class="tag">Earned value</span><span class="tag">Gantt and WBS</span>
+            <span class="tag">SWOT</span><span class="tag">Competitive analysis</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h">Communication</div>
+          <div class="card-b">
+            <span class="tag">Technical reports</span><span class="tag">Portuguese</span><span class="tag">English</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROLES -->
+    <section id="roles" aria-labelledby="roles-h">
+      <div class="sec-head"><div class="tier">Court 3</div><h2 id="roles-h">Important roles</h2></div>
+      <div class="cards">
+        <details class="role">
+          <summary>
+            <span class="role-kind">Firmware</span>
+            <span class="role-title">Bootloader developer</span>
+            <span class="role-sub">Second Stage Loader with A/B firmware slots</span>
+            <span class="role-more"></span>
+          </summary>
+          <div class="role-body">
+            <ul>
+              <li>Bare-metal loader for an Analog Devices SC59x target that checks a signature in external flash and hands over to the application.</li>
+              <li>Designed a dual-slot update scheme: a header in flash selects slot A or B, and new firmware arrives over Modbus TCP into the inactive slot.</li>
+              <li>Diagnoses boot faults with LED blink codes and traces them through flash timing, endianness and reset behaviour.</li>
+            </ul>
+            <div class="tags"><span class="tag">C</span><span class="tag">OSPI flash</span><span class="tag">Modbus TCP</span></div>
+          </div>
+        </details>
+
+        <details class="role">
+          <summary>
+            <span class="role-kind">Control</span>
+            <span class="role-title">Control systems implementer</span>
+            <span class="role-sub">Fan-driven ball levitation with PID</span>
+            <span class="role-more"></span>
+          </summary>
+          <div class="role-body">
+            <ul>
+              <li>Built a ball levitation rig where a fan holds a ball at a set height, read by a LiDAR sensor.</li>
+              <li>Implemented the control loop in C and tuned it step by step from P to PI to full PID, with an open-loop mode for testing.</li>
+              <li>Wrote a Python tool that plots RPM, duty cycle, setpoint and height against time from the logged CSV.</li>
+            </ul>
+            <div class="tags"><span class="tag">C</span><span class="tag">PID</span><span class="tag">Python</span><span class="tag">Matplotlib</span></div>
+          </div>
+        </details>
+
+        <details class="role">
+          <summary>
+            <span class="role-kind">Embedded</span>
+            <span class="role-title">Application developer</span>
+            <span class="role-sub">FreeRTOS radio on an LPC1769</span>
+            <span class="role-more"></span>
+          </summary>
+          <div class="role-body">
+            <ul>
+              <li>Application with an FM tuner, LCD, real-time clock, flash storage and MQTT over a UART-connected Wi-Fi module.</li>
+              <li>Structured it as a state machine with separate operation and maintenance modes.</li>
+              <li>Debugged buffer overflows, invalid clock writes and pointer errors in the existing code.</li>
+            </ul>
+            <div class="tags"><span class="tag">FreeRTOS</span><span class="tag">I2C</span><span class="tag">MQTT</span></div>
+          </div>
+        </details>
+
+        <details class="role">
+          <summary>
+            <span class="role-kind">Tooling</span>
+            <span class="role-title">Tool developer</span>
+            <span class="role-sub">Modbus/TCP data transfer in Python</span>
+            <span class="role-more"></span>
+          </summary>
+          <div class="role-body">
+            <ul>
+              <li>Shared core module used by both a command-line tool and a GUI.</li>
+              <li>Writes binary files to a remote device in register blocks and signals completion through a dedicated register.</li>
+            </ul>
+            <div class="tags"><span class="tag">Python</span><span class="tag">pymodbus</span><span class="tag">Tkinter</span></div>
+          </div>
+        </details>
+
+        <details class="role">
+          <summary>
+            <span class="role-kind">Coursework</span>
+            <span class="role-title">Real-time systems student</span>
+            <span class="role-sub">FreeRTOS scheduling and a door lock controller</span>
+            <span class="role-more"></span>
+          </summary>
+          <div class="role-body">
+            <ul>
+              <li>Analysed task scheduling and preemption, including suspend and resume behaviour.</li>
+              <li>Implemented a door lock controller using queues, mutexes, blink sequences and rising-edge detection.</li>
+            </ul>
+            <div class="tags"><span class="tag">FreeRTOS</span><span class="tag">Queues</span><span class="tag">Mutexes</span></div>
+          </div>
+        </details>
+
+        <details class="role">
+          <summary>
+            <span class="role-kind">Business</span>
+            <span class="role-title">Project and financial analyst</span>
+            <span class="role-sub">MicroGreens AgriTech, an IoT smart-farming startup case</span>
+            <span class="role-more"></span>
+          </summary>
+          <div class="role-body">
+            <ul>
+              <li>Financial model with discounted cash flow, IRR, NPV, payback, scenarios and amortisation schedules.</li>
+              <li>Planning with PERT and CPM critical path, earned value, Gantt charts and work breakdown structure.</li>
+              <li>Written deliverables including a competitive analysis against established irrigation companies.</li>
+            </ul>
+            <div class="tags"><span class="tag">DCF</span><span class="tag">PERT and CPM</span><span class="tag">EVM</span></div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- INTERESTS -->
+    <section id="interests" aria-labelledby="interests-h">
+      <div class="sec-head"><div class="tier">Court 4</div><h2 id="interests-h">Interests</h2></div>
+      <div class="cards">
+        <div class="card interest">
+          <h3>Hardware that behaves</h3>
+          <p>Getting a physical system to do what the code says, and working out why it doesn't when it doesn't.</p>
+        </div>
+        <div class="card interest">
+          <h3>Game development</h3>
+          <p>I'm planning a retro pixel-art tennis management game with a career mode, starting from a written roadmap.</p>
+        </div>
+        <div class="card interest">
+          <h3>Minecraft modpacks</h3>
+          <p>Playing them, and fixing them when a mod configuration breaks the launch.</p>
+        </div>
+        <div class="card interest">
+          <h3>Numbers behind projects</h3>
+          <p>Turning a plan into costs, timelines and risk so a decision can be checked.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>Rodrigo</span>
+    <span>Built with plain HTML and CSS.</span>
+  </footer>
+</div>
+
+<script>
+/* theme toggle: follows the system until you pick one, then remembers it */
+(function () {
+  var root = document.documentElement, btn = document.getElementById("theme");
+  function get() { try { return localStorage.getItem("theme"); } catch (e) { return null; } }
+  function set(v) { try { localStorage.setItem("theme", v); } catch (e) {} }
+  var saved = get();
+  if (saved === "light" || saved === "dark") root.setAttribute("data-theme", saved);
+  function current() {
+    var t = root.getAttribute("data-theme");
+    if (t) return t;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  btn.addEventListener("click", function () {
+    var next = current() === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next); set(next);
+  });
+})();
+
+/* pixel tennis ball */
+(function () {
+  var cv = document.getElementById("ball"), cx = cv.getContext("2d"), N = 24;
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function draw(lift) {
+    cx.clearRect(0, 0, N, N);
+    var cxr = 12, cyr = 10 - lift, r = 7;
+    cx.fillStyle = "rgba(0,0,0,.28)";
+    var sw = Math.round(7 - lift * 0.4);
+    cx.fillRect(12 - sw, 20, sw * 2, 2);
+    for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
+      var dx = x + 0.5 - cxr, dy = y + 0.5 - cyr, d = Math.sqrt(dx * dx + dy * dy);
+      if (d <= r) { cx.fillStyle = d > r - 1.1 ? "#9cb82a" : "#cfee3f"; cx.fillRect(x, y, 1, 1); }
+    }
+    cx.fillStyle = "#ffffff";
+    for (var t = -5; t <= 5; t++) {
+      cx.fillRect(Math.round(cxr + t * 0.9), Math.round(cyr - 4 + (t * t) / 6), 1, 1);
+      cx.fillRect(Math.round(cxr + t * 0.9), Math.round(cyr + 4 - (t * t) / 6), 1, 1);
+    }
+  }
+  draw(0);
+  if (reduce) return;
+  var t0 = performance.now();
+  (function loop(now) {
+    draw(Math.round(Math.abs(Math.sin((now - t0) / 520)) * 7));
+    requestAnimationFrame(loop);
+  })(t0);
+})();
+</script>
+</body>
+</html>
